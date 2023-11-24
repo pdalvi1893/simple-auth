@@ -12,7 +12,7 @@ module.exports = ({ strapi }) => ({
     // Promise.all([tt]).then((values) => {
     //   console.log(values);
     // });
-
+    let tt = strapi;
     let request = new Request({
       method: "POST",
       query: {},
@@ -21,22 +21,37 @@ module.exports = ({ strapi }) => ({
       //headers: { Authorization: "Bearer foobar" },
     });
 
+    let request1 = new Request({
+      method: "POST",
+      query: {},
+      body: ctx.request.body,
+      //headers: ctx.req.headers,
+      headers: {
+        Authorization: "Bearer b2a6c51b2ec673f8b0197d4fda1145c06654c725-test",
+      },
+    });
+
     let response = new Response({
       headers: {},
     });
 
-    var ttt = oauthServer.token(request, response, {
-      requireClientAuthentication: {
-        // whether client needs to provide client_secret
-        authorization_code: false,
-      },
+    let ll = oauthServer.authenticate(request1, response, {
+      scope: "test",
     });
+    ll = await Promise.all([ll]);
 
-    var test = ttt;
+    // var ttt = oauthServer.token(request, response, {
+    //   requireClientAuthentication: {
+    //     // whether client needs to provide client_secret
+    //     authorization_code: false,
+    //   },
+    // });
 
-    let ss = await Promise.all([ttt]);
+    // var test = ttt;
 
-    return ss[0];
+    // let ss = await Promise.all([ttt]);
+
+    return {};
     // Promise.all([ttt]).then((values) => {
     //   console.log(values);
     // });

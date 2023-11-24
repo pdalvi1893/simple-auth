@@ -69,14 +69,33 @@ module.exports = {
       user: tokenStore.user,
     };
   },
-  getAccessToken: (token) => {
+  getAccessToken: async (token) => {
     /* This is where you select the token from the database where the code matches */
     // log({
     //   title: "Get Access Token",
     //   parameters: [{ name: "token", value: token }],
     // });
-    if (!token || token === "undefined") return false;
-    return new Promise((resolve) => resolve(db.token));
+    // if (!token || token === "undefined") return false;
+    // return new Promise((resolve) => resolve(db.token));
+
+    let tokenStore = await strapi.entityService.findMany(
+      "plugin::simple-auth.token-store",
+      {
+        filters: {
+          access_token: {
+            $in: [token],
+          },
+        },
+      }
+    );
+    tokenStore = tokenStore[0];
+
+    return {
+      accessToken: tokenStore.access_token, // Access token that the server created
+      accessTokenExpiresAt: new Date(tokenStore.access_token_expires_at), // Date the token expires
+      client: tokenStore.client, // Client associated with this token
+      user: tokenStore.user, // User associated with this token
+    };
   },
   getRefreshToken: async (token) => {
     /* Retrieves the token from the database */
