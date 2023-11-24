@@ -8,6 +8,18 @@ module.exports = {
         .service('auth')
         .count(ctx);
     },
+    async token(ctx){
+      ctx.body = await strapi
+        .plugin('simple-auth')
+        .service('auth')
+        .getToken(ctx);
+    },
+    async refreshToken(ctx){
+      ctx.body = await strapi
+        .plugin('simple-auth')
+        .service('auth')
+        .getRefreshToken(ctx);
+    },
   };
 
 // 'use strict';

@@ -88,14 +88,17 @@ module.exports = {
         },
       }
     );
-    tokenStore = tokenStore[0];
 
-    return {
-      accessToken: tokenStore.access_token, // Access token that the server created
-      accessTokenExpiresAt: new Date(tokenStore.access_token_expires_at), // Date the token expires
-      client: tokenStore.client, // Client associated with this token
-      user: tokenStore.user, // User associated with this token
-    };
+    if (tokenStore.length) {
+      tokenStore = tokenStore[0];
+
+      return {
+        accessToken: tokenStore.access_token, // Access token that the server created
+        accessTokenExpiresAt: new Date(tokenStore.access_token_expires_at), // Date the token expires
+        client: tokenStore.client, // Client associated with this token
+        user: tokenStore.user, // User associated with this token
+      };
+    } else return false;
   },
   getRefreshToken: async (token) => {
     /* Retrieves the token from the database */
