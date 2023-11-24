@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "client_credentials",
+  "info": {
+    "singularName": "client-credential",
+    "pluralName": "client-credentials",
+    "displayName": "Client Credential"
+  },
+  "options": {
+    "draftAndPublish": true,
+    "comment": ""
+  },
+  "attributes": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_secret": {
+      "type": "string"
+    },
+    "grants": {
+      "type": "json"
+    },
+    "redirectUris": {
+      "type": "json"
+    }
+  }
+}
