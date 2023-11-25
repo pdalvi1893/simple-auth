@@ -1,78 +1,114 @@
-'use strict';
+"use strict";
 
-const { castArray, map, every, pipe } = require('lodash/fp');
-const { ForbiddenError, UnauthorizedError } = require('@strapi/utils').errors;
+const { castArray, map, every, pipe } = require("lodash/fp");
+const { ForbiddenError, UnauthorizedError } = require("@strapi/utils").errors;
 
-const { getService } = require('../utils');
+const oauthServer = require(".././auth/server");
+const OAuth2Server = require("oauth2-server");
+const Request = OAuth2Server.Request;
+const Response = OAuth2Server.Response;
+
+const { getService } = require("../utils");
 
 const getAdvancedSettings = () => {
-  return strapi.store({ type: 'plugin', name: 'users-permissions' }).get({ key: 'advanced' });
+  return strapi
+    .store({ type: "plugin", name: "users-permissions" })
+    .get({ key: "advanced" });
 };
 
 const authenticate = async (ctx) => {
   try {
-    var test = 123;
-    const token = await getService('jwt').getToken(ctx);
+    let token = await strapi
+      .plugin("simple-auth")
+      .service("auth")
+      .extractToken(ctx);
+    let strapiToken;
 
     if (token) {
-      const { id } = token;
+      let request = new Request({
+        method: "POST",
+        query: {},
+        body: ctx.request.body,
+        headers: ctx.req.headers,
+      });
 
-      // Invalid token
-      if (id === undefined) {
-        return { authenticated: false };
+      let response = new Response({
+        headers: {},
+      });
+
+      let authenticate = oauthServer.authenticate(request, response);
+
+      try {
+        authenticate = await Promise.all([authenticate]);
+      } catch (ex) {
+        strapiToken = await getService("jwt").getToken(ctx);
       }
 
-      const user = await getService('user').fetchAuthenticatedUser(id);
+      // this is public api.
+      if (authenticate?.length && authenticate[0]) {
+        const publicPermissions = await getService("permission")
+          .findPublicPermissions()
+          .then(map(getService("permission").toContentAPIPermission));
 
-      // No user associated to the token
-      if (!user) {
-        return { error: 'Invalid credentials' };
+        const ability =
+          await strapi.contentAPI.permissions.engine.generateAbility(
+            publicPermissions
+          );
+
+        return {
+          authenticated: true,
+          credentials: null,
+          ability,
+        };
       }
 
-      const advancedSettings = await getAdvancedSettings();
+      if (strapiToken) {
+        const { id } = strapiToken;
 
-      // User not confirmed
-      if (advancedSettings.email_confirmation && !user.confirmed) {
-        return { error: 'Invalid credentials' };
+        // Invalid token
+        if (id === undefined) {
+          return { authenticated: false };
+        }
+
+        const user = await getService("user").fetchAuthenticatedUser(id);
+
+        // No user associated to the token
+        if (!user) {
+          return { error: "Invalid credentials" };
+        }
+
+        const advancedSettings = await getAdvancedSettings();
+
+        // User not confirmed
+        if (advancedSettings.email_confirmation && !user.confirmed) {
+          return { error: "Invalid credentials" };
+        }
+
+        // User blocked
+        if (user.blocked) {
+          return { error: "Invalid credentials" };
+        }
+
+        // Fetch user's permissions
+        const permissions = await Promise.resolve(user.role.id)
+          .then(getService("permission").findRolePermissions)
+          .then(map(getService("permission").toContentAPIPermission));
+
+        // Generate an ability (content API engine) based on the given permissions
+        const ability =
+          await strapi.contentAPI.permissions.engine.generateAbility(
+            permissions
+          );
+
+        ctx.state.user = user;
+
+        return {
+          authenticated: true,
+          credentials: user,
+          ability,
+        };
       }
-
-      // User blocked
-      if (user.blocked) {
-        return { error: 'Invalid credentials' };
-      }
-
-      // Fetch user's permissions
-      const permissions = await Promise.resolve(user.role.id)
-        .then(getService('permission').findRolePermissions)
-        .then(map(getService('permission').toContentAPIPermission));
-
-      // Generate an ability (content API engine) based on the given permissions
-      const ability = await strapi.contentAPI.permissions.engine.generateAbility(permissions);
-
-      ctx.state.user = user;
-
-      return {
-        authenticated: true,
-        credentials: user,
-        ability,
-      };
     }
-
-    const publicPermissions = await getService('permission')
-      .findPublicPermissions()
-      .then(map(getService('permission').toContentAPIPermission));
-
-    if (publicPermissions.length === 0) {
-      return { authenticated: false };
-    }
-
-    const ability = await strapi.contentAPI.permissions.engine.generateAbility(publicPermissions);
-
-    return {
-      authenticated: true,
-      credentials: null,
-      ability,
-    };
   } catch (err) {
     return { authenticated: false };
   }
@@ -109,7 +145,7 @@ const verify = async (auth, config) => {
 };
 
 module.exports = {
-  name: 'users-permissions',
+  name: "users-permissions",
   authenticate,
   verify,
 };

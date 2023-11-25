@@ -29,7 +29,19 @@ const db = {
 module.exports = {
   getClient: async function (clientId, clientSecret) {
     let client = await strapi.entityService.findMany(
-      "plugin::simple-auth.client-credential"
+      "plugin::simple-auth.client-credential",
+      {
+        filters: {
+          $and: [
+            {
+              client_id: clientId,
+            },
+            {
+              client_secret: clientSecret,
+            },
+          ],
+        },
+      }
     );
 
     if (client.length) {
@@ -71,10 +83,6 @@ module.exports = {
   },
   getAccessToken: async (token) => {
     /* This is where you select the token from the database where the code matches */
-    // log({
-    //   title: "Get Access Token",
-    //   parameters: [{ name: "token", value: token }],
-    // });
     // if (!token || token === "undefined") return false;
     // return new Promise((resolve) => resolve(db.token));
 
@@ -102,10 +110,6 @@ module.exports = {
   },
   getRefreshToken: async (token) => {
     /* Retrieves the token from the database */
-    // log({
-    //   title: "Get Refresh Token",
-    //   parameters: [{ name: "token", value: token }],
-    // });
     // DebugControl.log.variable({ name: "db.token", value: db.token });
     let client = await strapi.entityService.findMany(
       "plugin::simple-auth.client-credential"
@@ -124,45 +128,17 @@ module.exports = {
     );
     tokenStore = tokenStore[0];
 
-    // var ttt = {
-    //   accessToken: "63411d23c2dbb287e97ac498cc8e819f1cd38be6",
-    //   accessTokenExpiresAt: new Date("2023-11-25T01:24:21.953Z"),
-    //   refreshToken: "56c9cb54087031137c1006bc0070af186daf64f5",
-    //   refreshTokenExpiresAt: new Date("2023-11-25T01:24:21.953Z"),
-    //   // refreshToken: "",
-    //   // refreshTokenExpiresAt: null,
-    //   client: {
-    //     clientId: "myClientId",
-    //     clientSecret: "myClientSecret",
-    //     grants: ["authorization_code", "refresh_token", "client_credentials"],
-    //     redirectUris: ["http://localhost:3030/client/app"],
-    //   },
-    //   user: { username: "username" },
-    // };
-
-    // return ttt;
-    //return JSON.parse(ttt);
     return {
       accessToken: tokenStore.access_token, // Access token that the server created
       accessTokenExpiresAt: new Date(tokenStore.access_token_expires_at), // Date the token expires
       refreshToken: "", // NOTE this is only needed if you need refresh tokens down the line
       refreshTokenExpiresAt: null,
-      // client: {
-      //   clientId: tokenStore.client.client_id,
-      //   clientSecret: tokenStore.client.client_secret,
-      //   grants: tokenStore.client.grants,
-      //   redirectUris: tokenStore.client.redirectUris,
-      // }, // Client associated with this token
       client: tokenStore.client,
       user: tokenStore.user, // User associated with this token
     };
   },
   revokeToken: (token) => {
     /* Delete the token from the database */
-    // log({
-    //   title: "Revoke Token",
-    //   parameters: [{ name: "token", value: token }],
-    // });
     if (!token || token === "undefined") return false;
     return new Promise((resolve) => resolve(true));
   },
@@ -199,14 +175,6 @@ module.exports = {
   },
   saveAuthorizationCode: (code, client, user) => {
     /* This is where you store the access code data into the database */
-    // log({
-    //   title: "Save Authorization Code",
-    //   parameters: [
-    //     { name: "code", value: code },
-    //     { name: "client", value: client },
-    //     { name: "user", value: user },
-    //   ],
-    // });
     db.authorizationCode = {
       authorizationCode: code.authorizationCode,
       expiresAt: code.expiresAt,
@@ -226,20 +194,12 @@ module.exports = {
   },
   getAuthorizationCode: (authorizationCode) => {
     /* this is where we fetch the stored data from the code */
-    // log({
-    //   title: "Get Authorization code",
-    //   parameters: [{ name: "authorizationCode", value: authorizationCode }],
-    // });
     return new Promise((resolve) => {
       resolve(db.authorizationCode);
     });
   },
   revokeAuthorizationCode: (authorizationCode) => {
     /* This is where we delete codes */
-    // log({
-    //   title: "Revoke Authorization Code",
-    //   parameters: [{ name: "authorizationCode", value: authorizationCode }],
-    // });
     db.authorizationCode = {
       // DB Delete in this in memory example :)
       authorizationCode: "", // A string that contains the code
@@ -253,13 +213,6 @@ module.exports = {
   },
   verifyScope: (token, scope) => {
     /* This is where we check to make sure the client has access to this scope */
-    // log({
-    //   title: "Verify Scope",
-    //   parameters: [
-    //     { name: "token", value: token },
-    //     { name: "scope", value: scope },
-    //   ],
-    // });
     const userHasAccess = true; // return true if this user / client combo has access to this resource
     return new Promise((resolve) => resolve(userHasAccess));
   },
