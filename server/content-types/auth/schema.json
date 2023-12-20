@@ -4,7 +4,12 @@
   "info": {
     "singularName": "auth",
     "pluralName": "auths",
-    "displayName": "auth"
+    "displayName": "Auth"
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    }
   },
   "options": {
     "draftAndPublish": true,

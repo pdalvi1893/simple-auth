@@ -104,7 +104,10 @@ module.exports = {
         accessToken: tokenStore.access_token, // Access token that the server created
         accessTokenExpiresAt: new Date(tokenStore.access_token_expires_at), // Date the token expires
         client: tokenStore.client, // Client associated with this token
-        user: tokenStore.user, // User associated with this token
+        //user: tokenStore.user, // User associated with this token
+        user: {
+          guest_id: tokenStore.guest_id,
+        },
       };
     } else return false;
   },

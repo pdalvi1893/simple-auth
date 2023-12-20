@@ -46,6 +46,9 @@ const authenticate = async (ctx) => {
 
       // this is public api.
       if (authenticate?.length && authenticate[0]) {
+        //set guest user ID in ctx
+        ctx.state.user = authenticate[0].user;
+
         const publicPermissions = await getService("permission")
           .findPublicPermissions()
           .then(map(getService("permission").toContentAPIPermission));
@@ -108,6 +111,12 @@ const authenticate = async (ctx) => {
           ability,
         };
       }
+    } else {
+      return {
+        authenticated: false,
+        credentials: null,
+        ability: null,
+      };
     }
   } catch (err) {
     return { authenticated: false };
