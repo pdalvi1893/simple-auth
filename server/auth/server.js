@@ -16,9 +16,9 @@ const model = require("./model");
 
 module.exports = new OAuth2Server({
   model: model,
-  accessTokenLifetime: 60 * 60 * 24,
+  accessTokenLifetime: 60 * 60 * 24 * 15,
   grants: ["authorization_code", "refresh_token", "client_credentials"],
-  refreshTokenLifetime: 60 * 60 * 24,
+  refreshTokenLifetime: 60 * 60 * 24 * 15,
   alwaysIssueNewRefreshToken: true,
   allowEmptyState: true,
   allowExtendedTokenAttributes: true,

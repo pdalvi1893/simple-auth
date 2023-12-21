@@ -49,9 +49,25 @@ const authenticate = async (ctx) => {
         //set guest user ID in ctx
         ctx.state.user = authenticate[0].user;
 
-        const publicPermissions = await getService("permission")
+        // const publicPermissions = await getService("permission")
+        //   .findPublicPermissions()
+        //   .then(map(getService("permission").toContentAPIPermission));
+
+        let publicPermissions = await getService("permission")
           .findPublicPermissions()
           .then(map(getService("permission").toContentAPIPermission));
+
+        const routes = await getService('users-permissions').getRoutes();
+        for (const key in routes) {
+          if (Object.hasOwnProperty.call(routes, key)) {
+            const element = routes[key];
+            for (const route of element) {
+              const handler = route.handler?.startsWith("api::") ? route.handler :
+                `api::${route.info.apiName}.${route.handler}`;
+              publicPermissions.push({ "action": handler });
+            }
+          }
+        }
 
         const ability =
           await strapi.contentAPI.permissions.engine.generateAbility(
