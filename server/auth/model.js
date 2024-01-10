@@ -1,5 +1,6 @@
 // See https://oauth2-server.readthedocs.io/en/latest/model/spec.html for what you can do with this
 const crypto = require("crypto");
+
 const db = {
   // Here is a fast overview of what your db model should look like
   authorizationCode: {
@@ -54,7 +55,7 @@ module.exports = {
       };
     } else return null;
   },
-  generateAccessToken: (client, user, scope) => {},
+  generateAccessToken: (client, user, scope) => { },
   saveToken: async (token, client, user) => {
     let tokenStore = await strapi.entityService.create(
       "plugin::simple-auth.token-store",
@@ -66,6 +67,7 @@ module.exports = {
           refresh_token_expires_at: token.refreshTokenExpiresAt,
           client: client,
           user: user,
+          guest_id: crypto.randomUUID(),
         },
       }
     );
@@ -79,6 +81,7 @@ module.exports = {
         : null,
       client: tokenStore.client,
       user: tokenStore.user,
+      guest_id: tokenStore.guest_id,
     };
   },
   getAccessToken: async (token) => {

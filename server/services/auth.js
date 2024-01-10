@@ -34,6 +34,7 @@ module.exports = ({ strapi }) => ({
       access_token: token[0].accessToken,
       access_token_expires_at: token[0].accessTokenExpiresAt,
       token_type: "Bearer",
+      guest_id: token[0].guest_id,
     };
   },
   async getRefreshToken(ctx) {
@@ -67,6 +68,7 @@ module.exports = ({ strapi }) => ({
       access_token_expires_at: token[0].accessTokenExpiresAt,
       token_type: "Bearer",
       refresh_token: token[0].refreshToken,
+      guest_id: token[0].guest_id,
     };
   },
   extractToken(ctx) {
