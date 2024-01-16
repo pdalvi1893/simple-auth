@@ -57,6 +57,7 @@ module.exports = {
   },
   generateAccessToken: (client, user, scope) => { },
   saveToken: async (token, client, user) => {
+    const guestId = user?.guest_id || crypto.randomUUID();
     let tokenStore = await strapi.entityService.create(
       "plugin::simple-auth.token-store",
       {
@@ -67,7 +68,7 @@ module.exports = {
           refresh_token_expires_at: token.refreshTokenExpiresAt,
           client: client,
           user: user,
-          guest_id: crypto.randomUUID(),
+          guest_id: guestId,
         },
       }
     );
@@ -80,7 +81,9 @@ module.exports = {
         ? new Date(tokenStore.refresh_token_expires_at)
         : null,
       client: tokenStore.client,
-      user: tokenStore.user,
+      user: {
+        guest_id: tokenStore.guest_id,
+      },
       guest_id: tokenStore.guest_id,
     };
   },
@@ -140,13 +143,22 @@ module.exports = {
       refreshToken: "", // NOTE this is only needed if you need refresh tokens down the line
       refreshTokenExpiresAt: null,
       client: tokenStore.client,
-      user: tokenStore.user, // User associated with this token
+      user: {
+        guest_id: tokenStore.guest_id,
+      }, // User associated with this token
     };
   },
-  revokeToken: (token) => {
+  revokeToken: async (token) => {
     /* Delete the token from the database */
     if (!token || token === "undefined") return false;
-    return new Promise((resolve) => resolve(true));
+    else {
+      await strapi.db.query("plugin::simple-auth.token-store").deleteMany({
+        where: {
+          access_token: token.accessToken
+        },
+      });
+      return new Promise((resolve) => resolve(true));
+    }
   },
   generateAuthorizationCode: (client, user, scope) => {
     /* 
@@ -155,7 +167,7 @@ module.exports = {
     2. find the oauth_server folder. (node_modules/express-oauth-server/node_modules/oauth2-server)
     3. open lib/handlers/authorize-handler.js
     4. Make the following change (around line 136):
-
+ 
     AuthorizeHandler.prototype.generateAuthorizationCode = function (client, user, scope) {
       if (this.model.generateAuthorizationCode) {
         // Replace this
@@ -223,7 +235,7 @@ module.exports = {
     return new Promise((resolve) => resolve(userHasAccess));
   },
 
-  getUserFromClient: () => {
+  getUserFromClient: (token) => {
     return new Promise((resolve) => resolve({ username: "username" }));
   },
 };
