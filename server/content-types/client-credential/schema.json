@@ -25,6 +25,9 @@
     },
     "redirectUris": {
       "type": "json"
+    },
+    "allowed_methods": {
+      "type": "json"
     }
   }
 }

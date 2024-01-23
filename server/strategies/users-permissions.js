@@ -10,6 +10,8 @@ const Response = OAuth2Server.Response;
 
 const { getService } = require("../utils");
 
+const _ = require('lodash');
+
 const getAdvancedSettings = () => {
   return strapi
     .store({ type: "plugin", name: "users-permissions" })
@@ -40,6 +42,12 @@ const authenticate = async (ctx) => {
 
       try {
         authenticate = await Promise.all([authenticate]);
+        if (authenticate?.length) {
+          const isAllowed = await isMethodAllowed(authenticate[0].client, ctx.req.url, ctx.req.method);
+
+          if (!isAllowed)
+            throw ex;
+        }
       } catch (ex) {
         strapiToken = await getService("jwt").getToken(ctx);
       }
@@ -48,10 +56,6 @@ const authenticate = async (ctx) => {
       if (authenticate?.length && authenticate[0]) {
         //set guest user ID in ctx
         ctx.state.user = authenticate[0].user;
-
-        // const publicPermissions = await getService("permission")
-        //   .findPublicPermissions()
-        //   .then(map(getService("permission").toContentAPIPermission));
 
         let publicPermissions = await getService("permission")
           .findPublicPermissions()
@@ -167,6 +171,29 @@ const verify = async (auth, config) => {
   if (!isAllowed) {
     throw new ForbiddenError();
   }
+};
+
+const isMethodAllowed = async (client, route, method) => {
+  let clientApp = await strapi.entityService.findMany(
+    "plugin::simple-auth.client-credential",
+    {
+      filters: {
+        $and: [
+          {
+            client_id: client.clientId,
+          },
+          {
+            client_secret: client.clientSecret,
+          },
+        ],
+      },
+    }
+  );
+
+  if (clientApp.length)
+    return _.some(clientApp[0].allowed_methods, (api) => (api.url === route) && (api.method === method));
+
+  return false;
 };
 
 module.exports = {
