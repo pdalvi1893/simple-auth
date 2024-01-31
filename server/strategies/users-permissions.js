@@ -191,7 +191,8 @@ const isMethodAllowed = async (client, route, method) => {
   );
 
   if (clientApp.length)
-    return _.some(clientApp[0].allowed_methods, (api) => (api.url === route) && (api.method === method));
+    return _.some(clientApp[0].allowed_methods, (api) => (route.startsWith(api.url)) && (api.method === method));
+  //return _.some(clientApp[0].allowed_methods, (api) => (api.url === route) && (api.method === method));
 
   return false;
 };
