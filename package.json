@@ -1,6 +1,6 @@
 {
   "name": "simple-strapi-auth",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "This is the description of the plugin.",
   "strapi": {
     "name": "simple-auth",
@@ -23,8 +23,8 @@
     "styled-components": "^5.3.6"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-router-dom": "^5.3.4",
     "styled-components": "^5.3.6"
   },
