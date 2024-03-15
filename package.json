@@ -1,6 +1,6 @@
 {
   "name": "simple-strapi-auth",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "This is the description of the plugin.",
   "strapi": {
     "name": "simple-auth",

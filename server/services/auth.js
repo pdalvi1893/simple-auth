@@ -5,6 +5,8 @@ const OAuth2Server = require("oauth2-server");
 const Request = OAuth2Server.Request;
 const Response = OAuth2Server.Response;
 
+const { getService } = require("../utils");
+
 module.exports = ({ strapi }) => ({
   async count(ctx) {
     return 0;
@@ -91,5 +93,31 @@ module.exports = ({ strapi }) => ({
     }
 
     return token;
+  },
+  async validateToken(token) {
+
+    let request = new Request({
+      method: "POST",
+      query: {},
+      body: {},
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    let response = new Response({
+      headers: {},
+    });
+
+    let authenticate = oauthServer.authenticate(request, response);
+
+    try {
+      authenticate = await Promise.all([authenticate]);
+      if (authenticate?.length) {
+        return true;
+      }
+    } catch (ex) {
+      let ttt = await getService('jwt').verify(token);
+    }
+
+    return true;
   },
 });
