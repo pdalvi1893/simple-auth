@@ -66,8 +66,8 @@ const authenticate = async (ctx) => {
           if (Object.hasOwnProperty.call(routes, key)) {
             const element = routes[key];
             for (const route of element) {
-              const handler = route.handler?.startsWith("api::") ? route.handler :
-                `api::${route.info.apiName}.${route.handler}`;
+              const apiName = route.info.apiName ? `api::${route.info.apiName}` : `plugin::${route.info.pluginName}`;
+              const handler = route.handler.startsWith("api::") ? route.handler : `${apiName}.${route.handler}`;
               publicPermissions.push({ "action": handler });
             }
           }
