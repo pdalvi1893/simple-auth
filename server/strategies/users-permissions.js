@@ -10,7 +10,7 @@ const Response = OAuth2Server.Response;
 
 const { getService } = require("../utils");
 
-const _ = require('lodash');
+const _ = require("lodash");
 
 const getAdvancedSettings = () => {
   return strapi
@@ -25,7 +25,39 @@ const authenticate = async (ctx) => {
       .service("auth")
       .extractToken(ctx);
     let strapiToken;
+    let validCSRFToken = await strapi
+      .plugin("simple-auth")
+      .service("auth")
+      .validateCSFRToken(ctx);
+    if (validCSRFToken) {
+      let publicPermissions = await getService("permission")
+        .findPublicPermissions()
+        .then(map(getService("permission").toContentAPIPermission));
 
+      const routes = await getService("users-permissions").getRoutes();
+      for (const key in routes) {
+        if (Object.hasOwnProperty.call(routes, key)) {
+          const element = routes[key];
+          for (const route of element) {
+            const handler = route.handler?.startsWith("api::")
+              ? route.handler
+              : `api::${route.info.apiName}.${route.handler}`;
+            publicPermissions.push({ action: handler });
+          }
+        }
+      }
+
+      const ability =
+        await strapi.contentAPI.permissions.engine.generateAbility(
+          publicPermissions
+        );
+
+      return {
+        authenticated: true,
+        credentials: null,
+        ability,
+      };
+    }
     if (token) {
       let request = new Request({
         method: "POST",
@@ -43,10 +75,13 @@ const authenticate = async (ctx) => {
       try {
         authenticate = await Promise.all([authenticate]);
         if (authenticate?.length) {
-          const isAllowed = await isMethodAllowed(authenticate[0].client, ctx.req.url, ctx.req.method);
+          const isAllowed = await isMethodAllowed(
+            authenticate[0].client,
+            ctx.req.url,
+            ctx.req.method
+          );
 
-          if (!isAllowed)
-            throw ex;
+          if (!isAllowed) throw ex;
         }
       } catch (ex) {
         strapiToken = await getService("jwt").getToken(ctx);
@@ -61,14 +96,18 @@ const authenticate = async (ctx) => {
           .findPublicPermissions()
           .then(map(getService("permission").toContentAPIPermission));
 
-        const routes = await getService('users-permissions').getRoutes();
+        const routes = await getService("users-permissions").getRoutes();
         for (const key in routes) {
           if (Object.hasOwnProperty.call(routes, key)) {
             const element = routes[key];
             for (const route of element) {
-              const apiName = route.info.apiName ? `api::${route.info.apiName}` : `plugin::${route.info.pluginName}`;
-              const handler = route.handler.startsWith("api::") ? route.handler : `${apiName}.${route.handler}`;
-              publicPermissions.push({ "action": handler });
+              const apiName = route.info.apiName
+                ? `api::${route.info.apiName}`
+                : `plugin::${route.info.pluginName}`;
+              const handler = route.handler.startsWith("api::")
+                ? route.handler
+                : `${apiName}.${route.handler}`;
+              publicPermissions.push({ action: handler });
             }
           }
         }
@@ -191,7 +230,10 @@ const isMethodAllowed = async (client, route, method) => {
   );
 
   if (clientApp.length)
-    return _.some(clientApp[0].allowed_methods, (api) => (route.startsWith(api.url)) && (api.method === method));
+    return _.some(
+      clientApp[0].allowed_methods,
+      (api) => route.startsWith(api.url) && api.method === method
+    );
   //return _.some(clientApp[0].allowed_methods, (api) => (api.url === route) && (api.method === method));
 
   return false;

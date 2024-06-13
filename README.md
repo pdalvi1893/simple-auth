@@ -34,11 +34,24 @@ curl --location 'http://localhost:1337/simple-auth/refresh-token' \
 --data-urlencode 'client_secret=myClientSecret' \
 --data-urlencode 'refresh_token=b323177e47a266abc2d5d9cd42c08dcccdb9e365'
 
+# Static Builds API call
+
+curl --location --globoff 'http://localhost:1337/api/countries' \
+--header 'x-csrf-token: randomCSRFToken' \
+--header 'Authorization: Bearer randomCSRFToken'
+
+
 ```
 
 ## Note
 
 - Please replace appropriate token and Basic auth values to generate access token.
+- For nextJS static builds, use x-csrf-token in header and same token to be sent in the authorisation header
+  which will be generated using a secret key from .env file 
+
+ ```
+ X_CSRF_SECRET = "randomString"
+ ```
 
 ## Features
 
