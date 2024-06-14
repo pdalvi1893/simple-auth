@@ -4,7 +4,8 @@ const oauthServer = require(".././auth/server");
 const OAuth2Server = require("oauth2-server");
 const Request = OAuth2Server.Request;
 const Response = OAuth2Server.Response;
-
+const csrf = require("csrf");
+const csrfTokens = new csrf();
 const { getService } = require("../utils");
 
 module.exports = ({ strapi }) => ({
@@ -38,7 +39,9 @@ module.exports = ({ strapi }) => ({
       token_type: "Bearer",
       guest_id: token[0].guest_id,
       created_at: new Date(),
-      expires_in: strapi.config.get('constants.ACCESS_TOKEN_LIFETIME') || 60 * 60 * 24 * 15,
+      expires_in:
+        strapi.config.get("constants.ACCESS_TOKEN_LIFETIME") ||
+        60 * 60 * 24 * 15,
     };
   },
   async getRefreshToken(ctx) {
@@ -74,7 +77,9 @@ module.exports = ({ strapi }) => ({
       refresh_token: token[0].refreshToken,
       guest_id: token[0].guest_id,
       created_at: new Date(),
-      expires_in: strapi.config.get('constants.ACCESS_TOKEN_LIFETIME') || 60 * 60 * 24 * 15,
+      expires_in:
+        strapi.config.get("constants.ACCESS_TOKEN_LIFETIME") ||
+        60 * 60 * 24 * 15,
     };
   },
   extractToken(ctx) {
@@ -95,7 +100,6 @@ module.exports = ({ strapi }) => ({
     return token;
   },
   async validateToken(token) {
-
     let request = new Request({
       method: "POST",
       query: {},
@@ -115,9 +119,22 @@ module.exports = ({ strapi }) => ({
         return true;
       }
     } catch (ex) {
-      let ttt = await getService('jwt').verify(token);
+      let ttt = await getService("jwt").verify(token);
     }
 
     return true;
+  },
+  validateCSFRToken(ctx) {
+    try {
+      if (ctx?.request?.headers["x-csrf-token"]) {
+        const csrfToken = ctx.request.headers["x-csrf-token"];
+        const secretKey = process.env.X_CSRF_SECRET;
+        return csrfTokens.verify(secretKey, csrfToken);
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
   },
 });
