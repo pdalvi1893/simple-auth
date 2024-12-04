@@ -119,7 +119,7 @@ module.exports = ({ strapi }) => ({
         return true;
       }
     } catch (ex) {
-      let ttt = await getService("jwt").verify(token);
+      return false;
     }
 
     return true;
